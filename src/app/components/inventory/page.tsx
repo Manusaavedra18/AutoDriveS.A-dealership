@@ -3,6 +3,8 @@
 import React, { useEffect } from "react";
 import cars from "@/app/data/cars.json";
 import { useState } from "react";
+import Image from "next/image";
+import photo from "@/../public/bmw.jpg";
 
 
 const Inventory = () => {
@@ -27,6 +29,7 @@ const Inventory = () => {
     descripcion?: string;
   }
 
+  const [carsData, setCarsData] = useState<Car[]>(cars);
   const [filteredCars, setFilteredCars] = useState<Car[]>(cars);
   const [selectedMake, setSelectedMake] = useState<string>("any");
   const [selectedModel, setSelectedModel] = useState<string>("");
@@ -39,6 +42,25 @@ const Inventory = () => {
 
   const [isOpen, setIsOpen] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const [newCarData, setNewCarData] = useState<Partial<Car>>({
+    marca: "",
+    modelo: "",
+    anio: new Date().getFullYear(),
+    precio: 0,
+    color: "",
+    tipo_combustible: "",
+    estado: "",
+    disponibilidad: "",
+    kilometraje: 0,
+    transmision: "",
+    tipo_carroceria: "",
+    motor: "",
+    patente: "",
+    tren_motriz: "",
+    eficiencia_combustible: 0,
+    color_interior: "",
+    descripcion: "",
+  });
   
   
   useEffect(() => {
@@ -50,8 +72,61 @@ const Inventory = () => {
     }
   }, [isOpen]);
 
+  const addVehicle = () => {
+    if (!newCarData.marca || !newCarData.modelo || !newCarData.anio || !newCarData.precio || !newCarData.color || !newCarData.kilometraje || !newCarData.tipo_carroceria || !newCarData.motor || !newCarData.patente || !newCarData.tren_motriz || !newCarData.eficiencia_combustible || !newCarData.color_interior || !newCarData.descripcion) {
+      alert("Please complete all required fields.");
+      return;
+    }
+
+    const nextId = Math.max(0, ...cars.map(c => c.id), ...filteredCars.map(c => c.id)) + 1;
+
+    const vehicle: Car = {
+      id: nextId,
+      marca: String(newCarData.marca),
+      modelo: String(newCarData.modelo),
+      anio: Number(newCarData.anio),
+      precio: Number(newCarData.precio),
+      color: String(newCarData.color || ""),
+      tipo_combustible: String(newCarData.tipo_combustible || ""),
+      estado: String(newCarData.estado || "nuevo"),
+      disponibilidad: String(newCarData.disponibilidad || "en stock"),
+      kilometraje: Number(newCarData.kilometraje), 
+      transmision: newCarData.transmision,
+      tipo_carroceria: newCarData.tipo_carroceria,
+      motor: newCarData.motor,
+      patente: newCarData.patente,
+      tren_motriz: newCarData.tren_motriz,
+      eficiencia_combustible: newCarData.eficiencia_combustible ? Number(newCarData.eficiencia_combustible) : undefined,
+      color_interior: newCarData.color_interior,
+      descripcion: newCarData.descripcion,
+    };
+
+    setCarsData(prev => [...prev,vehicle]);
+    setFilteredCars([...carsData,vehicle]);
+    setIsOpen(false);
+    setNewCarData({
+      marca: "",
+      modelo: "",
+      anio: new Date().getFullYear(),
+      precio: 0,
+      color: "",
+      tipo_combustible: "",
+      estado: "",
+      disponibilidad: "",
+      kilometraje: 0,
+      transmision: "",
+      tipo_carroceria: "",
+      motor: "",
+      patente: "",
+      tren_motriz: "",
+      eficiencia_combustible: 0,
+      color_interior: "",
+      descripcion: "",
+    });
+  };
+
   const filterCars = () => {
-    let updatedCars = cars;
+    let updatedCars = carsData;
 
     if (selectedMake !== "any") {
       updatedCars = updatedCars.filter(car => String(car.marca).toLowerCase() === selectedMake);
@@ -87,7 +162,6 @@ const Inventory = () => {
 
     setFilteredCars(updatedCars);
   };
-
 
   return (
     <>
@@ -186,7 +260,8 @@ const Inventory = () => {
               <button className="modify-btn text-white hover:text-indigo-300" title="Modify"><i data-lucide="file-pen-line" className="w-5 h-5"></i></button>
               <button className="deregister-btn text-white hover:text-red-400" title="Deregister"><i data-lucide="trash-2" className="w-5 h-5"></i></button>
             </div> */}
-            <img src="https://placehold.co/600x400/3498db/ffffff?text=Sedan" alt="Vehicle" className="w-full h-56 object-cover" />
+            
+            <Image src={photo} alt="Vehicle" className="w-full h-56 object-cover" width={400} height={300}/>
             <div className="p-5">
               <h3 className="text-xl font-bold mb-2">{car.anio} {car.modelo}</h3>
               <p className="text-xl font-bold mb-2">{car.marca}</p>
@@ -212,47 +287,148 @@ const Inventory = () => {
           >
             <h2 className="text-3xl font-semibold mb-4">Register New Vehicle</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70%] overflow-y-auto">
+              {/* TODO: add constants to select options */}
               <select
                 className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                onChange={e => setNewCarData(prev => ({ ...prev, marca: e.target.value }))}
               >
-                <option value="toyota">Toyota</option>
-                <option value="honda">Honda</option>
-                <option value="ford">Ford</option>
-
+                <option value="">Select Make</option>
+                <option value="Toyota">Toyota</option>
+                <option value="Honda">Honda</option>
+                <option value="Ford">Ford</option>
               </select>
-              <input type="text" placeholder="Model" className="p-2 border border-gray-300 rounded-md w-full" />
-              <input type="number" placeholder="Year" min={1900} max={new Date().getFullYear()} className="p-2 border border-gray-300 rounded-md w-full" />
-              <input type="number" placeholder="Price" min={0} className="p-2 border border-gray-300 rounded-md w-full" />
-              <input type="text" placeholder="Color" className="p-2 border border-gray-300 rounded-md w-full" />
-              <select className="p-2 border border-gray-300 rounded-md w-full">
+
+              <input
+                type="text"
+                placeholder="Model"
+                className="p-2 border border-gray-300 rounded-md w-full"
+                onChange={e => setNewCarData(prev => ({ ...prev, modelo: e.target.value }))}
+              />
+
+              <input
+                type="number"
+                placeholder="Year"
+                min={1900}
+                max={new Date().getFullYear()}
+                className="p-2 border border-gray-300 rounded-md w-full"
+                onChange={e => setNewCarData(prev => ({ ...prev, anio: Number(e.target.value) }))}
+              />
+
+              <input
+                type="number"
+                placeholder="Price"
+                min={0}
+                className="p-2 border border-gray-300 rounded-md w-full"
+                onChange={e => setNewCarData(prev => ({ ...prev, precio: Number(e.target.value) }))}
+              />
+
+              <input
+                type="text"
+                placeholder="Color"
+                className="p-2 border border-gray-300 rounded-md w-full"
+                onChange={e => setNewCarData(prev => ({ ...prev, color: e.target.value }))}
+              />
+
+              <select
+                className="p-2 border border-gray-300 rounded-md w-full"
+                onChange={e => setNewCarData(prev => ({ ...prev, tipo_combustible: e.target.value }))}
+              >
+                <option value="">Any Fuel</option>
                 <option value="nafta">Nafta</option>
                 <option value="diésel">Diésel</option>
                 <option value="eléctrico">Eléctrico</option>
                 <option value="híbrido">Híbrido</option>
               </select>
-              <select className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" onChange={e => setSelectedStatus(e.target.value.toLowerCase())}>
+
+              <select
+                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                onChange={e => {
+                  setNewCarData(prev => ({ ...prev, estado: e.target.value }));
+                }}
+              >
                 <option value="nuevo">Nuevo</option>
                 <option value="usado">Usado</option>
               </select>
-              <select className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" onChange={e => setSelectedDisponibility(e.target.value.toLowerCase())}>
+
+              <select
+                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                onChange={e => {
+                  setNewCarData(prev => ({ ...prev, disponibilidad: e.target.value }));
+                }}
+              >
                 <option value="en stock">En Stock</option>
                 <option value="vendido">Vendido</option>
               </select>
-              <input type="number" placeholder="Kilometraje" min={0} className="p-2 border border-gray-300 rounded-md w-full" />
-              <select className="p-2 border border-gray-300 rounded-md w-full">
+
+              <input
+                type="number"
+                placeholder="Kilometraje"
+                min={0}
+                className="p-2 border border-gray-300 rounded-md w-full"
+                onChange={e => setNewCarData(prev => ({ ...prev, kilometraje: Number(e.target.value) }))}
+              />
+
+              <select
+                className="p-2 border border-gray-300 rounded-md w-full"
+                onChange={e => setNewCarData(prev => ({ ...prev, transmision: e.target.value }))}
+              >
+                <option value="">Select Transmission</option>
                 <option value="manual">Manual</option>
                 <option value="automática">Automática</option>
               </select>
-              <input type="text" placeholder="Tipo de Carrocería" className="p-2 border border-gray-300 rounded-md w-full" />
-              <input type="text" placeholder="Motor" className="p-2 border border-gray-300 rounded-md w-full" />
-              <input type="text" placeholder="Patente" className="p-2 border border-gray-300 rounded-md w-full" />
-              <input type="text" placeholder="Tren Motriz" className="p-2 border border-gray-300 rounded-md w-full" />
-              <input type="number" placeholder="Eficiencia Combustible (km/l)" min={0} className="p-2 border border-gray-300 rounded-md w-full" />
-              <input type="text" placeholder="Color Interior" className="p-2 border border-gray-300 rounded-md w-full" />
-              <textarea placeholder="Descripción" className="p-2 border border-gray-300 rounded-md w-full resize-none" rows={3}></textarea>
+
+              <input
+                type="text"
+                placeholder="Tipo de Carrocería"
+                className="p-2 border border-gray-300 rounded-md w-full"
+                onChange={e => setNewCarData(prev => ({ ...prev, tipo_carroceria: e.target.value }))}
+              />
+
+              <input
+                type="text"
+                placeholder="Motor"
+                className="p-2 border border-gray-300 rounded-md w-full"
+                onChange={e => setNewCarData(prev => ({ ...prev, motor: e.target.value }))}
+              />
+
+              <input
+                type="text"
+                placeholder="Patente"
+                className="p-2 border border-gray-300 rounded-md w-full"
+                onChange={e => setNewCarData(prev => ({ ...prev, patente: e.target.value }))}
+              />
+
+              <input
+                type="text"
+                placeholder="Tren Motriz"
+                className="p-2 border border-gray-300 rounded-md w-full"
+                onChange={e => setNewCarData(prev => ({ ...prev, tren_motriz: e.target.value }))}
+              />
+
+              <input
+                type="number"
+                placeholder="Eficiencia Combustible (km/l)"
+                min={0}
+                className="p-2 border border-gray-300 rounded-md w-full"
+                onChange={e => setNewCarData(prev => ({ ...prev, eficiencia_combustible: Number(e.target.value) }))}
+              />
+
+              <input
+                type="text"
+                placeholder="Color Interior"
+                className="p-2 border border-gray-300 rounded-md w-full"
+                onChange={e => setNewCarData(prev => ({ ...prev, color_interior: e.target.value }))}
+              />
+
+              <textarea
+                placeholder="Descripción"
+                className="p-2 border border-gray-300 rounded-md w-full resize-none"
+                rows={3}
+                onChange={e => setNewCarData(prev => ({ ...prev, descripcion: e.target.value }))}
+              ></textarea>
             </div>
             <button
-              onClick={() => setIsOpen(false)}
+              onClick={addVehicle}
               className="bg-indigo-600 text-white font-bold py-2 px-2 rounded-lg hover:bg-indigo-700 transition duration-300 shadow-md mt-4"
             >
               Add Vehicle
