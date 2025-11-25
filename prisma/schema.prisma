@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model Car{
+  id Int @id @default(autoincrement())
+  marca String
+  modelo String
+  anio Int
+  precio Float
+  color String
+  tipo_combustible String
+  estado String
+  disponibilidad String
+  kilometraje Int
+  transmision String
+  tipo_carroceria String
+  motor String
+  patente String
+  tren_motriz String
+  eficiencia_combustible Float
+  color_interior String
+  descripcion String
+}

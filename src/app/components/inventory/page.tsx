@@ -5,6 +5,7 @@ import cars from "@/app/data/cars.json";
 import { useState } from "react";
 import Image from "next/image";
 import photo from "@/../public/bmw.jpg";
+import prisma from "@/lib/prisma";
 
 
 const Inventory = () => {
