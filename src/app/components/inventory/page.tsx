@@ -1,11 +1,10 @@
-"use client";
+"use client"
 
 import React, { useEffect } from "react";
-import cars from "@/app/data/cars.json";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import Image from "next/image";
 import photo from "@/../public/bmw.jpg";
-import prisma from "@/lib/prisma";
+import { CarContext } from "@/app/context/CarContext";
 
 
 const Inventory = () => {
@@ -30,8 +29,8 @@ const Inventory = () => {
     descripcion?: string;
   }
 
-  const [carsData, setCarsData] = useState<Car[]>(cars);
-  const [filteredCars, setFilteredCars] = useState<Car[]>(cars);
+  const [carsData, setCarsData] = useState<Car[]>([]);
+  const [filteredCars, setFilteredCars] = useState<Car[]>([]);
   const [selectedMake, setSelectedMake] = useState<string>("any");
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<number | "">("");
@@ -62,8 +61,20 @@ const Inventory = () => {
     color_interior: "",
     descripcion: "",
   });
-  
-  
+
+  const { cars, getCars, createCar } = useContext(CarContext);
+
+
+  useEffect(() => {
+    getCars();
+  }, []);
+
+  useEffect(() => {
+    setCarsData(cars || []);
+    setFilteredCars(cars || []);
+  }, [cars]);
+
+
   useEffect(() => {
     if (isOpen) {
       const timer = setTimeout(() => setShowContent(true), 10);
@@ -73,16 +84,25 @@ const Inventory = () => {
     }
   }, [isOpen]);
 
-  const addVehicle = () => {
-    if (!newCarData.marca || !newCarData.modelo || !newCarData.anio || !newCarData.precio || !newCarData.color || !newCarData.kilometraje || !newCarData.tipo_carroceria || !newCarData.motor || !newCarData.patente || !newCarData.tren_motriz || !newCarData.eficiencia_combustible || !newCarData.color_interior || !newCarData.descripcion) {
+
+
+  const addVehicle = async () => {
+
+
+
+    if (newCarData.kilometraje == 0 && newCarData.estado === "usado") {
+      alert("Kilometraje cannot be 0 for a used car.");
+      return;
+    }
+
+    if (!newCarData.marca || !newCarData.modelo || !newCarData.anio || !newCarData.precio || !newCarData.color || !newCarData.tipo_carroceria || !newCarData.motor || !newCarData.patente || !newCarData.tren_motriz || !newCarData.eficiencia_combustible || !newCarData.color_interior || !newCarData.descripcion) {
       alert("Please complete all required fields.");
       return;
     }
 
-    const nextId = Math.max(0, ...cars.map(c => c.id), ...filteredCars.map(c => c.id)) + 1;
 
-    const vehicle: Car = {
-      id: nextId,
+
+    const vehicle = {
       marca: String(newCarData.marca),
       modelo: String(newCarData.modelo),
       anio: Number(newCarData.anio),
@@ -91,7 +111,7 @@ const Inventory = () => {
       tipo_combustible: String(newCarData.tipo_combustible || ""),
       estado: String(newCarData.estado || "nuevo"),
       disponibilidad: String(newCarData.disponibilidad || "en stock"),
-      kilometraje: Number(newCarData.kilometraje), 
+      kilometraje: Number(newCarData.kilometraje),
       transmision: newCarData.transmision,
       tipo_carroceria: newCarData.tipo_carroceria,
       motor: newCarData.motor,
@@ -102,8 +122,14 @@ const Inventory = () => {
       descripcion: newCarData.descripcion,
     };
 
-    setCarsData(prev => [...prev,vehicle]);
-    setFilteredCars([...carsData,vehicle]);
+    const created = await createCar(vehicle);
+
+    if (created) {
+      getCars();
+      setCarsData(cars || []);
+      setFilteredCars(cars || []);
+    }
+
     setIsOpen(false);
     setNewCarData({
       marca: "",
@@ -192,31 +218,31 @@ const Inventory = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Price Range </label>
             <div className="flex items-center space-x-2">
-            <input 
-            type="number" 
-            placeholder="Min" 
-            className="w-full p-2 border border-gray-300 rounded-md" 
-            min={0}
-            onChange={e => setMinPrice(Number(e.target.value))} 
-            />
-            <span>-</span>
-            <input 
-            type="number"
-            placeholder="Max"
-            className="w-full p-2 border border-gray-300 rounded-md" 
-            min={0} 
-            max={100000}
-            onChange={e => setMaxPrice(Number(e.target.value))} 
-            />
+              <input
+                type="number"
+                placeholder="Min"
+                className="w-full p-2 border border-gray-300 rounded-md"
+                min={0}
+                onChange={e => setMinPrice(Number(e.target.value))}
+              />
+              <span>-</span>
+              <input
+                type="number"
+                placeholder="Max"
+                className="w-full p-2 border border-gray-300 rounded-md"
+                min={0}
+                max={100000}
+                onChange={e => setMaxPrice(Number(e.target.value))}
+              />
             </div>
           </div>
           <div>
             <label htmlFor="" className="block text-sm font-medium text-gray-700 mb-2">Model </label>
-            <input type="text" name="model" placeholder="Model" className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 " onChange={e => setSelectedModel(e.target.value.toLowerCase())}/>
+            <input type="text" name="model" placeholder="Model" className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 " onChange={e => setSelectedModel(e.target.value.toLowerCase())} />
           </div>
           <div>
             <label htmlFor="" className="block text-sm font-medium text-gray-700 mb-2">Year</label>
-            <input type="number" name="year" placeholder="Year" min={1900} max={new Date().getFullYear()} className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 " onChange={e => setSelectedYear(Number(e.target.value))}/>
+            <input type="number" name="year" placeholder="Year" min={1900} max={new Date().getFullYear()} className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 " onChange={e => setSelectedYear(Number(e.target.value))} />
           </div>
           <div>
             <label htmlFor="fuel-type" className="block text-sm font-medium text-gray-700 mb-2">Fuel Type</label>
@@ -261,8 +287,8 @@ const Inventory = () => {
               <button className="modify-btn text-white hover:text-indigo-300" title="Modify"><i data-lucide="file-pen-line" className="w-5 h-5"></i></button>
               <button className="deregister-btn text-white hover:text-red-400" title="Deregister"><i data-lucide="trash-2" className="w-5 h-5"></i></button>
             </div> */}
-            
-            <Image src={photo} alt="Vehicle" className="w-full h-56 object-cover" width={400} height={300}/>
+
+            <Image src={photo} alt="Vehicle" className="w-full h-56 object-cover" width={400} height={300} />
             <div className="p-5">
               <h3 className="text-xl font-bold mb-2">{car.anio} {car.modelo}</h3>
               <p className="text-xl font-bold mb-2">{car.marca}</p>
@@ -271,19 +297,17 @@ const Inventory = () => {
             </div>
           </div>
         ))}
-        
+
       </div>
       {isOpen && (
         <div
-          className={`fixed inset-0 bg-black/50 flex items-center justify-center transition-opacity duration-300 ${
-            showContent ? "opacity-100" : "opacity-0"
-          }`}
+          className={`fixed inset-0 bg-black/50 flex items-center justify-center transition-opacity duration-300 ${showContent ? "opacity-100" : "opacity-0"
+            }`}
           onClick={() => setIsOpen(false)}
         >
           <div
-            className={`bg-white p-6 rounded-2xl shadow-lg w-[80%] text-center transform transition-all duration-300 h-[90%] ${
-              showContent ? "scale-100 opacity-100" : "scale-90 opacity-0"
-            }`}
+            className={`bg-white p-6 rounded-2xl shadow-lg w-[80%] text-center transform transition-all duration-300 h-[90%] ${showContent ? "scale-100 opacity-100" : "scale-90 opacity-0"
+              }`}
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-3xl font-semibold mb-4">Register New Vehicle</h2>
