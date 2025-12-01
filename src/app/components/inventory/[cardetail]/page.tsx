@@ -1,10 +1,18 @@
-import React from "react";
-import cars from "@/app/data/cars.json";
+"use client"
+
+import React from "react"
+import { useContext } from "react"
+import { CarContext } from "@/app/context/CarContext";
 
 
 const DetailsPage = ({ params }: { params: { cardetail: string } }) => {
-    const carId = Number(params.cardetail);
-    const car = cars.find((car) => Number(car.id) === carId);
+    const { cars, isLoading } = useContext(CarContext)
+    const carId = Number(params.cardetail)
+    const car = cars.find((car) => Number(car.id) === carId)
+
+    if (isLoading) {
+        return <div>Cargando...</div>
+    }
 
     return (
         <div>

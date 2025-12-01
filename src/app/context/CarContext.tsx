@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useState } from "react"
+import { createContext, useEffect, useState } from "react"
 
 interface Car {
     marca: string;
@@ -24,22 +24,37 @@ interface Car {
 
 export const CarContext = createContext<{
     cars: any[],
+    isLoading: boolean,
     getCars: () => Promise<void>,
     createCar: (car: any) => Promise<any>
 }>({
     cars: [],
+    isLoading: false,
     getCars: async () => {},
     createCar: async () => null
 })
 
 export const CarProvider = ({ children } : { children: React.ReactNode }) => {
     const [cars, setCars] = useState<Car[]>([])
+    const [isLoading, setIsLoading] = useState<boolean>(true)
 
     async function getCars() {
-        const res = await fetch('/api/cars')
-        const data = await res.json()
-        setCars(data)
+        try {
+            setIsLoading(true)
+            const res = await fetch('/api/cars')
+            const data = await res.json()
+            setCars(data)
+        } catch (error) {
+            console.error('Error fetching cars', error)
+            setCars([])
+        } finally {
+            setIsLoading(false)
+        }
     }
+
+    useEffect(() => {
+        getCars();
+    }, []);
 
     async function createCar(car: Car) {
         const res = await fetch('/api/cars', {
@@ -57,7 +72,7 @@ export const CarProvider = ({ children } : { children: React.ReactNode }) => {
         }
     }
 
-    return <CarContext.Provider value={{cars, getCars, createCar}}>
+    return <CarContext.Provider value={{cars, isLoading, getCars, createCar}}>
         {children}
     </CarContext.Provider>
 }

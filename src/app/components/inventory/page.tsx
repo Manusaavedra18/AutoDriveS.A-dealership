@@ -5,6 +5,7 @@ import { useState, useContext } from "react";
 import Image from "next/image";
 import photo from "@/../public/bmw.jpg";
 import { CarContext } from "@/app/context/CarContext";
+import { get } from "http";
 
 
 const Inventory = () => {
@@ -63,11 +64,6 @@ const Inventory = () => {
   });
 
   const { cars, getCars, createCar } = useContext(CarContext);
-
-
-  useEffect(() => {
-    getCars();
-  }, []);
 
   useEffect(() => {
     setCarsData(cars || []);
