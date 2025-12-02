@@ -5,30 +5,12 @@ import { useState, useContext } from "react";
 import Image from "next/image";
 import photo from "@/../public/bmw.jpg";
 import { CarContext } from "@/app/context/CarContext";
-import { get } from "http";
+import { Car } from "@/app/interfaces/Car";
+import { Trash2, FilePenLine } from 'lucide-react';
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
 
 
 const Inventory = () => {
-  interface Car {
-    id: number;
-    marca: string;
-    modelo: string;
-    anio: number;
-    precio: number;
-    color: string;
-    tipo_combustible: string;
-    estado: string;
-    disponibilidad: string;
-    kilometraje?: number;
-    transmision?: string;
-    tipo_carroceria?: string;
-    motor?: string;
-    patente?: string;
-    tren_motriz?: string;
-    eficiencia_combustible?: number;
-    color_interior?: string;
-    descripcion?: string;
-  }
 
   const [carsData, setCarsData] = useState<Car[]>([]);
   const [filteredCars, setFilteredCars] = useState<Car[]>([]);
@@ -63,12 +45,33 @@ const Inventory = () => {
     descripcion: "",
   });
 
-  const { cars, getCars, createCar } = useContext(CarContext);
+  const { cars, getCars, createCar, deleteCar } = useContext(CarContext);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [carToDelete, setCarToDelete] = useState<Car | null>(null);
 
   useEffect(() => {
     setCarsData(cars || []);
     setFilteredCars(cars || []);
   }, [cars]);
+
+  const openDeleteModal = (car: Car) => {
+    setCarToDelete(car);
+    setModalOpen(true);
+  }
+
+  const confirmDelete = async () => {
+    if (!carToDelete) return;
+    await deleteCar(String(carToDelete.id));
+    setModalOpen(false);
+    setCarToDelete(null);
+    getCars();
+  }
+
+  const cancelDelete = () => {
+    setModalOpen(false);
+    setCarToDelete(null);
+  }
 
 
   useEffect(() => {
@@ -279,10 +282,10 @@ const Inventory = () => {
       <div id="vehicle-grid" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 mx-20">
         {filteredCars.map(car => (
           <div key={car.id} className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 transform hover:-translate-y-1 relative">
-            {/* <div className="absolute top-2 right-2 flex gap-2 bg-black bg-opacity-30 p-1 rounded-md">
-              <button className="modify-btn text-white hover:text-indigo-300" title="Modify"><i data-lucide="file-pen-line" className="w-5 h-5"></i></button>
-              <button className="deregister-btn text-white hover:text-red-400" title="Deregister"><i data-lucide="trash-2" className="w-5 h-5"></i></button>
-            </div> */}
+                <div className="absolute top-2 right-2 flex gap-2 bg-black/40 p-1 rounded-md">
+                  <button className=" text-white hover:text-indigo-300" title="Modify" ><FilePenLine></FilePenLine></button>
+                  <button onClick={() => openDeleteModal(car)} className="deregister-btn text-white hover:text-red-400" title="Deregister"><Trash2></Trash2></button>
+                </div>
 
             <Image src={photo} alt="Vehicle" className="w-full h-56 object-cover" width={400} height={300} />
             <div className="p-5">
@@ -291,6 +294,8 @@ const Inventory = () => {
               <p className="text-indigo-600 font-semibold text-2xl mb-4">${car.precio}</p>
               <a href={`inventory/${car.id}`} className="w-full text-center block bg-gray-800 text-white font-semibold py-2 rounded-lg hover:bg-gray-900 transition">View Details</a>
             </div>
+            {/* <button>Delete</button>
+            <button>Edit</button> */}
           </div>
         ))}
 
@@ -457,6 +462,7 @@ const Inventory = () => {
           </div>
         </div>
       )}
+      <ConfirmDeleteModal open={modalOpen} carName={carToDelete ? `${carToDelete.marca} ${carToDelete.modelo}` : undefined} onConfirm={confirmDelete} onCancel={cancelDelete} />
     </>
   );
 };

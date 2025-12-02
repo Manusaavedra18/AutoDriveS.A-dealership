@@ -1,37 +1,20 @@
 "use client"
 
 import { createContext, useEffect, useState } from "react"
-
-interface Car {
-    marca: string;
-    modelo: string;
-    anio: number;
-    precio: number;
-    color: string;
-    tipo_combustible: string;
-    estado: string;
-    disponibilidad: string;
-    kilometraje?: number;
-    transmision?: string;
-    tipo_carroceria?: string;
-    motor?: string;
-    patente?: string;
-    tren_motriz?: string;
-    eficiencia_combustible?: number;
-    color_interior?: string;
-    descripcion?: string;
-  }
+import { Car, CarInput } from "../interfaces/Car";
 
 export const CarContext = createContext<{
-    cars: any[],
+    cars: Car[],
     isLoading: boolean,
     getCars: () => Promise<void>,
-    createCar: (car: any) => Promise<any>
+    createCar: (car: CarInput) => Promise<CarInput | null>,
+    deleteCar: (id: string) => Promise<void>
 }>({
     cars: [],
     isLoading: false,
     getCars: async () => {},
-    createCar: async () => null
+    createCar: async () => null,
+    deleteCar: async () => {}
 })
 
 export const CarProvider = ({ children } : { children: React.ReactNode }) => {
@@ -56,7 +39,7 @@ export const CarProvider = ({ children } : { children: React.ReactNode }) => {
         getCars();
     }, []);
 
-    async function createCar(car: Car) {
+    async function createCar(car: CarInput) {
         const res = await fetch('/api/cars', {
             method: 'POST',
             body: JSON.stringify(car),
@@ -72,7 +55,16 @@ export const CarProvider = ({ children } : { children: React.ReactNode }) => {
         }
     }
 
-    return <CarContext.Provider value={{cars, isLoading, getCars, createCar}}>
+    async function deleteCar(id: string) {
+        const res = await fetch(`/api/cars/${id}`, {
+            method: 'DELETE',
+        });
+        if (res.ok) {
+            setCars(cars.filter(car => car.id !== id));
+        }
+    }
+
+    return <CarContext.Provider value={{cars, isLoading, getCars, createCar, deleteCar}}>
         {children}
     </CarContext.Provider>
 }
